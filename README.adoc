@@ -279,6 +279,7 @@ query AllHeroesInTeamQuery($teamName: String) {
 With the following GraphQL variable:
 [source,]
 ----
+{
 
   "teamName":"Avengers"
 }
