@@ -1,0 +1,542 @@
+= Manifold GraphQL evaluation
+
+This project is a technical evaluation of Manifold GraphQL, a Java GraphQL framework.
+A basic knowledge of GraphQL is required.
+
+It is made of JUnit test cases, mostly based on the SuperHeroDatabase application used by https://github.com/eclipse/microprofile-graphql[Eclipse Microprofile GraphQL project] TCK.
+
+To run it against a GraphQL server, I recommend to use another project on my GitHub repo: https://github.com/jefrajames/kumhero[kumero] which is an implementation of the SuperHeroDatabase using KumuluzEE. Don't worry, it's very easy and lightwieght to use.
+
+== What is Manifold?
+
+https://github.com/manifold-systems/manifold[MANIFOLD] is a generic purpose framework to easely integrate data in Java code coming from different sources: GraphQL, REST, JSON, YAML, XML, properties ...
+
+It covers a broad range of other features such as typesafe reflection, acces to JavaScript code, preprocessors(#if ...), extension methods ... To make a long story short, it aims at making Java easier to use.
+
+The main characteristics of Manifold are:
+
+* source available on GitHub: https://github.com/manifold-systems/manifold[Manifold]
+* one core project, several sub-projects: GraphQL, Science, Yaml, Json, Text, JavaScript ...
+* maven artifacts available on https://mvnrepository.com/artifact/systems.manifold[Maven Central]
+* Apache License 2.0
+* commercial license available
+* IntelliJ Manifold plugin subject to https://plugins.jetbrains.com/plugin/10057-manifold/pricing[commercial licence]
+* 9 committers, one of them being more active: Scott McKinney (alias rsmckinney)
+* last stable release: 2019.1.26 (October 2019).
+
+== What is Manifold GraphQL?
+
+https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-graphql[Manifold GraphQL] enables *schema-first* GraphQL development in any Java projects.
+It can be used on both the client and the server sides.
+The focus of this evaluation is on the client-side.
+
+The main principles are:
+
+* SDL (Schema Definition Language) files as the *single source of truth*
+* No Java Code Generation
+* Byte code generation under the cover made by a specific compiler (javac) plugin (to be configured in your build tool)
+* Technical interfaces and classes automatically generated refelecting the GraphQL API structure: types, queries, mutations etc ...
+
+== Programming model
+
+With Manifold the developper experience is simplified: Java API reflecting the GraphQL API is automatically available.You don't have to develop Java code for it.
+
+The SDL file of the target GraphQL API is needed.
+You just have to copy it as a resource in your project.
+In this example, this file is named **superheroes.graphql**.
+
+You can then develop your GraphQL operations (queries and mutations) in an other SDL file.
+In this example, this file is named *queries.graphql* and is located in the same directory as superheroes.graphql.
+As illustrated below, these operations are named and use variables.
+
+A good approach is to develop and test them with an interactive tool such as https://github.com/graphql/graphiql[GraphiQL].
+The you can copy-paste the tested request in queries.graphql.
+
+All these principles are show-cased by a https://github.com/manifold-systems/manifold-sample-graphql-app[demo application] which is a good starting point.
+It demonstrates both client and server sides with advanced GraphQL features such as union, interface, fragment and enum.
+
+In practise, it is recommended to use https://intellij-support.jetbrains.com/hc/en-us[IntelliJ IDE] and a (commercial) https://plugins.jetbrains.com/plugin/10057-manifold[specific plugin].
+
+The following tests have done with these tools.
+
+Warning: as of this date (mid-Nov. 2019), it seems that Manifold artifacts published on Maven Central (current version 2019.10.1) are not updated with IntelliJ plugin (current version 2019.2.5).
+Despite warning messages coming from IntelliJ, I didnt' get any blocking issue.
+
+Let's be more concrete with some examples.
+
+== Querying a single value
+
+Let's start with a very basic query returning a single value.
+
+We want to generate the following GraphQL query:
+
+[source,json]
+----
+query HelloQuery {
+    hello
+}
+----
+
+The expected response from the server is:
+
+[source,json]
+----
+{
+  "data": {
+    "hello": "Hello"
+  }
+}
+----
+
+The SDL definition of the query is:
+
+[source,sdl]
+----
+# Definition in superheroes.graphql
+type QueryRoot {
+    # Among other query definitions
+    hello: String
+    }
+ 
+# Definition in queries.graphql 
+query HelloQuery {
+    hello
+}
+----
+
+We can observe that we use a named query.
+Manifold is going to use this name to generate a HelloQuery Java interface.
+
+The Java code to run the query is:
+
+[source,Java]
+----
+HelloQuery query = HelloQuery.builder().build();
+HelloQuery.Result result = query.request(SERVER_URL).post();
+
+assertNotNull(result.getHello());
+assertEquals("Hello", result.getHello());
+----
+
+In that example, Manifold has auto-magically generated a ready to use HelloQuery interface from the SDL definition.
+
+== Querying a single value with an argument
+
+Let's complexify a little the previous example: we want a hello field with an argument.
+The trick with GraphQL is that each field is a potential function with arguments.
+
+We want to generate the following GraphQL query:
+
+[source,json]
+----
+query HelloWithNameQuery($name: String) {
+  helloWithName(name: $name)
+}
+----
+
+The expected response from the server is:
+
+[source,json]
+----
+{
+  "data": {
+    "helloWithName": "Hello jefrajames"
+  }
+}
+----
+
+The SDL definition of the query is:
+
+[source,json]
+----
+# Definition in superheroes.graphql 
+type QueryRoot {
+  # Among other query definitions
+  helloWithName(name: String): String
+}
+
+# Definition in queries.graphql 
+query HelloWithNameQueryx($name: String) {
+  helloWithName(name: $name)
+}
+----
+
+We've defined a named query with a variable.
+
+The Java code to run the query is:
+
+[source,Java]
+----
+HelloWithNameQuery query
+HelloWithNameQuery.builder().withName("jefrajames").build();
+HelloWithNameQuery.Result result = query.request(SERVER_URL).post();
+        
+assertNotNull(result.getHelloWithName());
+assertEquals("Hello jefrajames", result.getHelloWithName());
+----
+
+Manifold has generated the HelloWithNameQuery Java interface from the SDL definition.
+We can observe how easy it is to provide the argument value using the withName method.
+
+== Querying a list
+
+So far, we've worked with single values in the response, let's work with a list: we want to retrieve the list of all super heroes.
+
+We want to generate the following GraphQL query:
+
+[source,json]
+----
+query AllHeroesQuery {
+    allHeroes {
+        name
+        realName
+        primaryLocation
+    }
+}
+----
+
+The expected response from the server is:
+
+[source,json]
+----
+{
+  "data": {
+    "allHeroes": [
+      {
+        "name": "Iron Man",
+        "primaryLocation": "Los Angeles, CA",
+        "realName": "Tony Stark"
+      },
+      {
+        "name": "Starlord",
+        "primaryLocation": "Outer Space",
+        "realName": "Peter Quill"
+      },
+      # etc ...
+----
+
+The SDL definition for the query is:
+
+[source,json]
+----
+# Definition in superheroes.graphql 
+type QueryRoot {
+    # Among other query definitions
+    allHeroes: [SuperHero]
+}
+
+# Definition in queries.graphql 
+query AllHeroesQuery {
+    allHeroes {
+        name
+        realName
+        primaryLocation
+    }
+}
+----
+
+The Java code to run the query is:
+
+[source,Java]
+----
+AllHeroesQuery query = AllHeroesQuery.builder().build();
+AllHeroesQuery.Result result = query.request(SERVER_URL).post();
+
+assertNotNull(result.getAllHeroes());
+int size = result.getAllHeroes().size();
+assertTrue(size >= 4);
+
+List<AllHeroesQuery.Result.allHeroes> heroes = result.getAllHeroes();
+    for (AllHeroesQuery.Result.allHeroes hero : heroes) {
+        out.println("\thero.name=" + hero.getName());
+        out.println("\thero realName=" + hero.getRealName());
+        out.println("\thero primaryLocation=" + hero.getPrimaryLocation());
+    }
+----
+
+== Querying a list with an argument
+
+Let's say we want to retrieve all super heroes from a team.
+
+We want to generate the following GraphQL request:
+
+[source,json]
+----
+query AllHeroesInTeamQuery($teamName: String) {
+  allHeroesInTeam(team: $teamName) {
+    name
+    realName
+    superPowers
+  }
+}
+----
+
+The expected response from the server is:
+
+[source,json]
+----
+{
+  "data": {
+    "allHeroesInTeam": [
+      {
+        "name": "Iron Man",
+        "primaryLocation": "Los Angeles, CA",
+        "realName": "Tony Stark",
+        "superPowers": [
+          "wealth",
+          "engineering"
+        ]
+      },
+      {
+        "name": "Spider Man",
+        "primaryLocation": "New York, NY",
+        "realName": "Peter Parker",
+        "superPowers": [
+          "Spidey Sense",
+          "Wall-Crawling",
+          "Super Strength",
+          "Web-shooting"
+        ]
+      },
+      # etc ...
+----
+
+The SDL definition of the query is:
+
+[source,json]
+----
+# Definition in superheroes.graphql 
+type QueryRoot {
+    # Among other query definitions
+    allHeroesInTeam(team: String): [SuperHero]
+}
+ 
+# Definition in queries.graphql   
+query AllHeroesInTeamQuery($teamName: String) {
+    allHeroesInTeam(team: $teamName) {
+        name
+        realName
+        superPowers
+    }
+}
+----
+
+The Java code to run the query is:
+
+[source,Java]
+----
+AllHeroesInTeamQuery query = AllHeroesInTeamQuery.builder().withTeamName("Avengers").build();
+AllHeroesInTeamQuery.Result result = query.request(SERVER_URL).post();
+
+assertNotNull(result.getAllHeroesInTeam());
+assertTrue(result.getAllHeroesInTeam().size() >= 3);
+
+List<AllHeroesInTeamQuery.Result.allHeroesInTeam> heroesInTeam = result.getAllHeroesInTeam();
+for (AllHeroesInTeamQuery.Result.allHeroesInTeam heroInTeam : heroesInTeam) {
+    out.println("\thero.name=" + heroInTeam.getName());
+    out.println("\thero realName=" + heroInTeam.getRealName());
+    for (String superPower : heroInTeam.getSuperPowers()) {
+        out.println("\t\thero.superpower=" + superPower);
+        }
+    }
+----
+
+In that example, we've retrieved all avengers.
+
+== Running a simple mutation
+
+So far, we've just read data using queries.
+Let's try to modify data with a mutation operation now.
+According to the specification, a mutation is supposed to have some side effects.
+Typically, to add or modify data.
+
+We want to generate the following GraphQL request:
+
+[source,json]
+----
+mutation AddHeroToTeam($heroName: String, $teamName: String) {
+  addHeroToTeam(hero: $heroName, team: $teamName) {
+    members {
+      name
+      primaryLocation
+      realName
+    }
+  }
+}
+----
+
+With the following GraphQL variables:
+
+[source,json]
+----
+{
+  "heroName": "Spider Man",
+  "teamName": "X-Men"
+}
+----
+
+In that case, we want Spider Man to become a member of the X-Men team.
+
+The expected response from the server is:
+
+[source,json]
+----
+{
+  "data": {
+    "addHeroToTeam": {
+      "members": [
+        {
+          "name": "Wolverine",
+          "primaryLocation": "Unknown",
+          "realName": "James Howlett, aka Logan"
+        },
+        {
+          "name": "Spider Man",
+          "primaryLocation": "New York, NY",
+          "realName": "Peter Parker"
+        }
+      ]
+    }
+  }
+}
+----
+
+The SDL definition of the mutation is:
+
+[source,json]
+----
+# Definition in superheroes.graphql 
+type MutationRoot {
+    # Among other mutation definitions
+    addHeroToTeam(hero: String, team:String): Team
+}
+
+# Definition in queries.graphql 
+mutation AddHeroToTeam($heroName: String, $teamName: String) {
+    addHeroToTeam(hero: $heroName, team: $teamName) {
+        members {
+            name
+            primaryLocation
+            realName
+        }
+    }
+}
+----
+
+The Java code to run the mutation is:
+
+[source,Java]
+----
+AddHeroToTeam mutation = AddHeroToTeam.builder().withHeroName("Spider Man").withTeamName("X-Men").build();
+AddHeroToTeam.Result result = mutation.request(SERVER_URL).post();
+
+assertNotNull(result.getAddHeroToTeam());
+assertTrue(result.getAddHeroToTeam().getMembers().size() >= 1);
+
+
+for (AddHeroToTeam.Result.addHeroToTeam.members member: result.getAddHeroToTeam().getMembers()) {
+    out.println("\t member.name=" + member.getName());
+    out.println("\tmember.realName" + member.getRealName());
+    out.println("\tmember.primaryLocation=" + member.getPrimaryLocation());
+    }
+----
+
+An we've made Spider Man a member of X-Men.
+
+== Running a more complex mutation
+
+Let’s run a more complex mutation now.
+We want to add a new hero, namely Bruce Lee (not a Marvel hero, but one of my favourite one).
+
+We want to generate the following GraphQL request:
+
+[source,json]
+----
+mutation CreateNewHero($name: String, $realName: String, $primaryLocation: String, $superPowers: [String], $teamName: String) {
+  createNewHero(hero: {
+    name: $name, 
+    realName: $realName, 
+    primaryLocation: $primaryLocation, 
+    superPowers: $superPowers, 
+    teamAffiliations: [{name: $teamName}]}) 
+  {
+    realName
+  }
+}
+----
+
+With the following variables:
+
+[source,json]
+----
+{
+  "name": "Bruce Lee",
+  "realName": "Lee Jun Fan",
+  "primaryLocation": "San Francisco",
+  "superPowers": ["Jet Kune Do", "Fitness"],
+  "teamName": "Martial artist"
+}
+----
+
+The expected response from the server is:
+
+[source,json]
+----
+{
+  "data": {
+    "createNewHero": {
+      "realName": "Lee Jun Fan"
+    }
+  }
+}
+----
+
+The SDL of the mutation is:
+
+[source,json]
+----
+# Definition in superheroes.graphql 
+type MutationRoot {
+  # Among other mutation definitions
+  createNewHero(hero: SuperHeroInput): SuperHero
+}
+
+# Definition in queries.graphql 
+mutation CreateNewHero($name: String, $realName: String, $primaryLocation: String, $superPowers: [String], $teamName: String) {
+  createNewHero(hero: {
+    name: $name, 
+    realName: $realName, 
+    primaryLocation: $primaryLocation, 
+    superPowers: $superPowers, 
+    teamAffiliations: [{name: $teamName}]}) 
+  {
+    realName
+  }
+}
+----
+
+The Java code to run the mutation is:
+
+[source,Java]
+----
+ CreateNewHero mutation = CreateNewHero.builder()
+        .withName("Bruce Lee")
+        .withRealName("Lee Jun Fan")
+        .withPrimaryLocation("San Francisco")
+        .withSuperPowers(List.of("Jet Kune Do", "Fitness"))
+        .withTeamName("Martial artist")
+        .build();
+
+CreateNewHero.Result result = mutation.request(SERVER_URL).post();
+
+assertNotNull(result.getCreateNewHero());
+assertEquals(result.getCreateNewHero().getRealName(), "Lee Jun Fan");
+----
+
+== References
+
+The following references have been used to write this articles:
+
+* https://graphql.github.io/graphql-spec/June2018/[GraphQL specifications June 2018]
+* https://github.com/manifold-systems/manifold[Manifold]
+* https://github.com/manifold-systems/manifold/tree/master/manifold-deps-parent/manifold-graphql[ManififoldGraphQL]

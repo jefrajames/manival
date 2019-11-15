@@ -1,0 +1,48 @@
+#
+# A very simple schema for the SuperHero Database
+#
+
+schema {
+    query: QueryRoot
+    mutation: MutationRoot
+}
+
+type QueryRoot {
+    allHeroes: [SuperHero]
+    allTeams: [Team]
+    allHeroesInTeam(team: String): [SuperHero]
+    findHeroByName(name: String): SuperHero
+    hello: String
+    helloWithName(name: String): String
+}
+
+type MutationRoot {
+    addHeroToTeam(hero: String, team:String): Team
+    createNewHero(hero: SuperHeroInput): SuperHero
+}
+
+type SuperHero {
+    name: String
+    realName: String
+    primaryLocation: String
+    superPowers: [String]
+    teamAffiliations: [Team]
+}
+
+type Team {
+    name: String
+    members: [SuperHero]
+}
+
+input SuperHeroInput {
+    name: String
+    realName: String
+    primaryLocation: String
+    superPowers: [String]
+    teamAffiliations: [TeamInput]
+}
+
+input TeamInput {
+    name: String
+    members: [SuperHeroInput]
+}

@@ -1,0 +1,74 @@
+#
+# Sample queries against the `superheroes.graphql schema file
+#
+# Use Manifold to access queryies type-safely in Java directly by name such as MovieQuery.builder()...
+#
+query AllHeroesQuery {
+    allHeroes {
+        name
+        realName
+        primaryLocation
+    }
+}
+
+query AllTeamsQuery {
+    allTeams {
+        name
+        members {
+            name
+            realName
+        }
+    }
+}
+
+query AllHeroesInTeamQuery($teamName: String) {
+    allHeroesInTeam(team: $teamName) {
+        name
+        realName
+        superPowers
+    }
+}
+
+query FindHeroByNameQuery($heroName: String) {
+    findHeroByName(name: $heroName) {
+        name
+        realName
+        teamAffiliations {
+            name
+        }
+    }
+}
+
+query HelloQuery {
+    hello
+}
+
+query HelloWithNameQuery($name: String) {
+    helloWithName(name: $name)
+}
+
+query HelloWithNameQueryx($name: String) {
+    helloWithName(name: $name)
+}
+
+mutation AddHeroToTeam($heroName: String, $teamName: String) {
+    addHeroToTeam(hero: $heroName, team: $teamName) {
+        members {
+            name
+            primaryLocation
+            realName
+        }
+    }
+}
+
+mutation CreateNewHero($name: String, $realName: String, $primaryLocation: String, $superPowers: [String], $teamName: String) {
+    createNewHero(hero: {
+        name: $name,
+        realName: $realName,
+        primaryLocation: $primaryLocation,
+        superPowers: $superPowers,
+        teamAffiliations: [{name: $teamName}]})
+    {
+        realName
+    }
+}
