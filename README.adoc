@@ -5,7 +5,7 @@ A basic knowledge of GraphQL is required.
 
 It is made of JUnit test cases, mostly based on the SuperHeroDatabase application used by https://github.com/eclipse/microprofile-graphql[Eclipse Microprofile GraphQL project] TCK.
 
-To run it against a GraphQL server, I recommend to use another project on my GitHub repo: https://github.com/jefrajames/kumhero[kumero] which is an implementation of the SuperHeroDatabase using KumuluzEE. Don't worry, it's very easy and lightwieght to use.
+To run it against a GraphQL server, I recommend to use another project on my GitHub repo: https://github.com/jefrajames/kumhero[kumero] which is an implementation of the SuperHeroDatabase using KumuluzEE. Don't worry, it's very easy and lightweight to use.
 
 == What is Manifold?
 
