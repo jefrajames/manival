@@ -70,7 +70,7 @@ Let's start with a very basic query returning a single value.
 
 We want to generate the following GraphQL query:
 
-[source,json]
+[source,]
 ----
 query HelloQuery {
     hello
@@ -79,7 +79,7 @@ query HelloQuery {
 
 The expected response from the server is:
 
-[source,json]
+[source,]
 ----
 {
   "data": {
@@ -90,7 +90,7 @@ The expected response from the server is:
 
 The SDL definition of the query is:
 
-[source,sdl]
+[source,]
 ----
 # Definition in superheroes.graphql
 type QueryRoot {
@@ -104,7 +104,7 @@ query HelloQuery {
 }
 ----
 
-We can observe that we use a named query.
+We can observe that we use a query named __HelloQuery__.
 Manifold is going to use this name to generate a HelloQuery Java interface.
 
 The Java code to run the query is:
@@ -136,7 +136,7 @@ query HelloWithNameQuery($name: String) {
 
 The expected response from the server is:
 
-[source,json]
+[source,]
 ----
 {
   "data": {
@@ -147,7 +147,7 @@ The expected response from the server is:
 
 The SDL definition of the query is:
 
-[source,json]
+[source,]
 ----
 # Definition in superheroes.graphql 
 type QueryRoot {
@@ -184,7 +184,7 @@ So far, we've worked with single values in the response, let's work with a list:
 
 We want to generate the following GraphQL query:
 
-[source,json]
+[source,]
 ----
 query AllHeroesQuery {
     allHeroes {
@@ -197,7 +197,7 @@ query AllHeroesQuery {
 
 The expected response from the server is:
 
-[source,json]
+[source,]
 ----
 {
   "data": {
@@ -217,7 +217,7 @@ The expected response from the server is:
 
 The SDL definition for the query is:
 
-[source,json]
+[source,]
 ----
 # Definition in superheroes.graphql 
 type QueryRoot {
@@ -260,7 +260,7 @@ Let's say we want to retrieve all super heroes from a team.
 
 We want to generate the following GraphQL request:
 
-[source,json]
+[source,]
 ----
 query AllHeroesInTeamQuery($teamName: String) {
   allHeroesInTeam(team: $teamName) {
@@ -273,7 +273,7 @@ query AllHeroesInTeamQuery($teamName: String) {
 
 The expected response from the server is:
 
-[source,json]
+[source,]
 ----
 {
   "data": {
@@ -303,7 +303,7 @@ The expected response from the server is:
 
 The SDL definition of the query is:
 
-[source,json]
+[source,]
 ----
 # Definition in superheroes.graphql 
 type QueryRoot {
@@ -352,7 +352,7 @@ Typically, to add or modify data.
 
 We want to generate the following GraphQL request:
 
-[source,json]
+[source,]
 ----
 mutation AddHeroToTeam($heroName: String, $teamName: String) {
   addHeroToTeam(hero: $heroName, team: $teamName) {
@@ -367,7 +367,7 @@ mutation AddHeroToTeam($heroName: String, $teamName: String) {
 
 With the following GraphQL variables:
 
-[source,json]
+[source,]
 ----
 {
   "heroName": "Spider Man",
@@ -379,7 +379,7 @@ In that case, we want Spider Man to become a member of the X-Men team.
 
 The expected response from the server is:
 
-[source,json]
+[source,]
 ----
 {
   "data": {
@@ -403,7 +403,7 @@ The expected response from the server is:
 
 The SDL definition of the mutation is:
 
-[source,json]
+[source,]
 ----
 # Definition in superheroes.graphql 
 type MutationRoot {
@@ -450,7 +450,7 @@ We want to add a new hero, namely Bruce Lee (not a Marvel hero, but one of my fa
 
 We want to generate the following GraphQL request:
 
-[source,json]
+[source,]
 ----
 mutation CreateNewHero($name: String, $realName: String, $primaryLocation: String, $superPowers: [String], $teamName: String) {
   createNewHero(hero: {
@@ -467,7 +467,7 @@ mutation CreateNewHero($name: String, $realName: String, $primaryLocation: Strin
 
 With the following variables:
 
-[source,json]
+[source,]
 ----
 {
   "name": "Bruce Lee",
@@ -480,7 +480,7 @@ With the following variables:
 
 The expected response from the server is:
 
-[source,json]
+[source,]
 ----
 {
   "data": {
@@ -493,7 +493,7 @@ The expected response from the server is:
 
 The SDL of the mutation is:
 
-[source,json]
+[source,]
 ----
 # Definition in superheroes.graphql 
 type MutationRoot {
