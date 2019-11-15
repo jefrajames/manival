@@ -133,7 +133,13 @@ query HelloWithNameQuery($name: String) {
   helloWithName(name: $name)
 }
 ----
-
+With the following GraphQL variable:
+[source,]
+----
+{
+  "name": "jefrajames"
+}
+----
 The expected response from the server is:
 
 [source,]
@@ -270,7 +276,13 @@ query AllHeroesInTeamQuery($teamName: String) {
   }
 }
 ----
+With the following GraphQL variable:
+[source,]
+----
 
+  "teamName":"Avengers"
+}
+----
 The expected response from the server is:
 
 [source,]
@@ -441,7 +453,7 @@ for (AddHeroToTeam.Result.addHeroToTeam.members member: result.getAddHeroToTeam(
     }
 ----
 
-An we've made Spider Man a member of X-Men.
+And we've made Spider Man a member of X-Men.
 
 == Running a more complex mutation
 
@@ -465,7 +477,7 @@ mutation CreateNewHero($name: String, $realName: String, $primaryLocation: Strin
 }
 ----
 
-With the following variables:
+With the following GraphQL variables:
 
 [source,]
 ----
